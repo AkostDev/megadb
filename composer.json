@@ -4,6 +4,12 @@
     "type": "library",
     "license": "MIT",
     "minimum-stability": "dev",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Woody174/megadb.git"
+        }
+    ],
     "authors": [
         {
             "name": "Alexander Kostylev",
