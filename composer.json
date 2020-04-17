@@ -3,6 +3,7 @@
     "description": "Simple PHP Class for MySQL",
     "type": "library",
     "license": "MIT",
+    "minimum-stability": "dev",
     "authors": [
         {
             "name": "Alexander Kostylev",
