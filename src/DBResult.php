@@ -1,5 +1,5 @@
 <?
-namespace MegaCoder;
+namespace AKost\MegaDB;
 
 /**
  * Class DBResult

@@ -1,5 +1,5 @@
 <?php
-namespace MegaCoder;
+namespace AKost\MegaDB;
 
 use Exception;
 
