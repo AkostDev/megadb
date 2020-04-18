@@ -6,26 +6,33 @@ use Exception;
 /**
  * Class DB
  * @package AKost\MegaDB
- * @author Alex Developer
+ * @author Alexander Kostylev
  * @version 1.0.0
  * @license MIT
  */
 class DB
 {
     /**
-     * @var false|\mysqli Содержит в себе соединение с БД
+     * @var false|\mysqli Содержит в себе соединение с базой данных
      */
     private $connect;
+
     /**
-     * @var string Название БД
+     * @var string Название базы данных
      */
     private $dbName;
+
     /**
      * @var \mysqli_stmt Служит для подготовки запросов
      */
     private static $stmt;
 
-    private static $exception;
+    /**
+     * @var Exception Для ошибок
+     */
+    public static $exception;
+
+    public static $errors = false;
 
     /**
      * DB constructor.
@@ -33,15 +40,15 @@ class DB
      * @param string $host Имя хоста или IP-адрес
      * @param string $username Имя пользователя MySQL
      * @param string $pass Пароль
-     * @param string $db Название БД
-     * @param string $default_charset Кодировка БД
+     * @param string $db Название базы данных
+     * @param string $default_charset Кодировка базы данных
      */
-    public function __construct($host, $username, $pass, $db = '', $default_charset = 'utf8mb4')
-    {
+    public function __construct($host, $username, $pass, $db = '', $default_charset = 'utf8mb4') {
         try {
             // Устанавливаем соединение с БД
             // Если не удалось установить соединение - выбрасываем исключение
             if (!$this->connect = mysqli_connect($host, $username, $pass, $db)) {
+                self::$errors = true;
                 throw new Exception("Connection error - " . mysqli_connect_errno());
             }
 
@@ -52,19 +59,17 @@ class DB
             self::$stmt = mysqli_stmt_init($this->connect);
         }
         catch (Exception $e) {
-            echo '<p>' . $e->getMessage() . '</p>';
+            self::$exception = $e;
         }
 
         $this->dbName = $db;
     }
 
     /**
-     * Закрываем соединение с БД
      * DB destructor
+     * Закрываем соединение с базой данных
      */
-    public function __destruct()
-    {
-        //self::$stmt = null;
+    public function __destruct() {
         mysqli_stmt_close(self::$stmt);
         mysqli_close($this->connect);
     }
@@ -73,8 +78,7 @@ class DB
      * Возвращает имя базы данных или false, в случае, если не задано
      * @return bool|string
      */
-    public function getName()
-    {
+    public function getName() {
         return empty($this->dbName) ? false : $this->dbName;
     }
 
@@ -84,19 +88,17 @@ class DB
      * @param int $resultmode
      * @return bool|DBResult
      */
-    public function Query($strQuery, $resultmode = MYSQLI_STORE_RESULT)
-    {
+    public function Query($strQuery, $resultmode = MYSQLI_STORE_RESULT) {
         $res = mysqli_query($this->connect, $strQuery, $resultmode);
         return is_bool($res) ? $res : new DBResult($res);
     }
 
     /**
-     * Проверка существования таблицы
+     * Проверка существования таблицы в базе данных
      * @param $tableName
      * @return bool
      */
-    public function tableExists($tableName)
-    {
+    public function TableExists($tableName) {
         $res = $this->Query("SHOW TABLES LIKE '{$tableName}'");
 
         return ($res->ResCount() > 0);
@@ -106,8 +108,7 @@ class DB
      * Получение списка таблиц в базе данных
      * @return mixed
      */
-    public function getTableList()
-    {
+    public function GetTableList() {
         $dbName = $this->dbName;
         $resT = $this->Query("SELECT * FROM information_schema.tables WHERE table_schema='{$dbName}' ORDER BY TABLE_ROWS DESC, TABLE_NAME ASC");
         return $resT->GetAll();
@@ -118,8 +119,7 @@ class DB
      * @param $tableName
      * @return bool
      */
-    private function getTypes($tableName)
-    {
+    private function GetTypes($tableName) {
         $arResult = false;
 
         try {
@@ -147,11 +147,13 @@ class DB
                 }
             }
             else {
+                self::$errors = true;
                 throw new Exception("Error getting table fields");
             }
         }
         catch (Exception $e) {
-            echo '<p>' . $e->getMessage() . '</p>';
+            self::$exception = $e;
+            return false;
         }
 
         return $arResult;
@@ -163,13 +165,12 @@ class DB
      * @param $tblName
      * @return mixed
      */
-    public function Add($arFields, $tblName)
-    {
-        $arAddValues = $arrAddFields = $arValues = array();
+    public function Add($arFields, $tblName) {
+        $arAddValues = $arrAddFields = $arValues = [];
         $str_types = '';
 
         // Получаем типы полей таблицы
-        $arTypes = $this->getTypes($tblName);
+        $arTypes = $this->GetTypes($tblName);
 
         // Формируем данные для запроса
         foreach ($arFields as $k => $v) {
@@ -185,13 +186,16 @@ class DB
 
         try {
             if (!mysqli_stmt_prepare(self::$stmt, $sql)) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error prepare before Add');
             }
             if (!mysqli_stmt_bind_param(self::$stmt, $str_types, ...$arValues)) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error bind param before Add');
             }
             if (!mysqli_stmt_execute(self::$stmt)) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error execute Add');
             }
         } catch (Exception $e) {
             self::$exception = $e;
@@ -208,13 +212,12 @@ class DB
      * @param $tblName
      * @return int|string|false
      */
-    public function Update($rowId, $arFields, $tblName)
-    {
+    public function Update($rowId, $arFields, $tblName) {
         $strUpdate = $str_types = "";
-        $arValues = array();
+        $arValues = [];
 
         // Получаем типы полей таблицы
-        $arTypes = $this->getTypes($tblName);
+        $arTypes = $this->GetTypes($tblName);
 
         foreach ($arFields as $k => $v) {
             if (!empty($strUpdate)) $strUpdate .= ", ";
@@ -227,13 +230,16 @@ class DB
 
         try {
             if (!mysqli_stmt_prepare(self::$stmt, "UPDATE {$tblName} SET {$strUpdate} WHERE id=?")) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error prepare before Update');
             }
             if (!mysqli_stmt_bind_param(self::$stmt, $str_types . 'i', ...$arValues)) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error bind param before Update');
             }
             if (!mysqli_stmt_execute(self::$stmt)) {
-                throw new Exception('');
+                self::$errors = true;
+                throw new Exception('Error execute Update');
             }
         } catch (Exception $e) {
             self::$exception = $e;
@@ -249,8 +255,7 @@ class DB
      * @param $tblName
      * @return bool
      */
-    public static function Delete($rowId, $tblName)
-    {
+    public static function Delete($rowId, $tblName) {
         mysqli_stmt_prepare(self::$stmt, "DELETE FROM {$tblName} WHERE id=?");
         mysqli_stmt_bind_param(self::$stmt, "i", intval($rowId));
 
@@ -263,16 +268,18 @@ class DB
      * @param $tblName
      * @return DBResult | bool
      */
-    public static function GetByID($rowId, $tblName)
-    {
+    public static function GetByID($rowId, $tblName) {
         try {
             if (!mysqli_stmt_prepare(self::$stmt, "SELECT * FROM {$tblName} WHERE id=?")) {
+                self::$errors = true;
                 throw new Exception('Failed to prepare request');
             }
             if (!mysqli_stmt_bind_param(self::$stmt, "i", intval($rowId))) {
+                self::$errors = true;
                 throw new Exception('Failed to bind variables to query parameters');
             }
             if (!mysqli_stmt_execute(self::$stmt)) {
+                self::$errors = true;
                 throw new Exception('Failed to execute prepared request');
             }
         } catch (Exception $e) {
@@ -292,21 +299,20 @@ class DB
      * @param $tblName
      * @return DBResult | bool
      */
-    public function GetList($arOrder, $arFilter, $arSelect, $limit, $tblName)
-    {
-        // Если поля для выборки не указаны, то берем все поля
-        if (empty($arSelect)) $arSelect = array('*');
+    public function GetList($arOrder, $arFilter, $arSelect, $limit, $tblName) {
+        // Если поля для выборки не указаны, то берём все поля
+        if (empty($arSelect)) $arSelect = ['*'];
 
         // Формируем SQL запрос
         $sql = "SELECT " . implode(', ', $arSelect) . " FROM {$tblName}";
 
         // Получаем все типы полей таблицы
-        $arTypes = $this->getTypes($tblName);
+        $arTypes = $this->GetTypes($tblName);
         // Формируем массив для подготовки фильтра
-        $arRes = array(
+        $arRes = [
             'TYPES'     => '',
-            'VALUES'    => array()
-        );
+            'VALUES'    => []
+        ];
         self::prepareFilter($arFilter, $arTypes, $arRes, count($arFilter) - 2);
 
         // Если фильтр не пустой, то добавляем условия в SQL запрос
@@ -333,16 +339,19 @@ class DB
 
         try {
             if (!mysqli_stmt_prepare(self::$stmt, $sql)) {
+                self::$errors = true;
                 throw new Exception('Failed to prepare request');
             }
 
             if (!empty($arRes['VALUES'])) {
                 if (!mysqli_stmt_bind_param(self::$stmt, $arRes['TYPES'], ...$arRes['VALUES'])) {
+                    self::$errors = true;
                     throw new Exception('Failed to bind variables to query parameters');
                 }
             }
 
             if (!mysqli_stmt_execute(self::$stmt)) {
+                self::$errors = true;
                 throw new Exception('Failed to execute prepared request');
             }
         } catch (Exception $e) {
@@ -361,7 +370,7 @@ class DB
      * @param $cnt
      */
     private static function prepareFilter($arFilter, $arTypes, &$arResult, $cnt) {
-        $arSim = array('<=', '>=', '<', '>', '!=');
+        $arSim = ['<=', '>=', '<', '>', '!='];
         $logic = ' AND ';
         $conditionLogic = ' AND ';
         $i = 0;
@@ -412,13 +421,12 @@ class DB
      * В случае ошибки возвращает поля с описанием ошибки
      * @return array | bool
      */
-    public function GetError()
-    {
-        return is_null(self::$exception) ? false : array(
+    public function GetError() {
+        return is_null(self::$exception) ? false : [
             'message'   => self::$exception->getMessage(),
             'code'      => self::$exception->getCode(),
             'file'      => self::$exception->getFile(),
             'line'      => self::$exception->getLine(),
-        );
+        ];
     }
 }

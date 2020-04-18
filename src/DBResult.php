@@ -4,7 +4,7 @@ namespace AKost\MegaDB;
 /**
  * Class DBResult
  * @package AKost\MegaDB
- * @author Alex Developer
+ * @author Alexander Kostylev
  * @version 1.0.0
  * @license MIT
  */
@@ -16,36 +16,34 @@ class DBResult
     private $res;
 
     /**
-     * MC_DB_Result constructor.
+     * DBResult constructor.
      * @param \mysqli_result $result
      */
-    public function __construct($result)
-    {
+    public function __construct($result) {
         $this->res = $result;
     }
 
     /**
-     * DB destructor
+     * DBResult destructor
+     * Освобождаем память, занятую результатами запроса
      */
-    public function __destruct()
-    {
+    public function __destruct() {
         mysqli_free_result($this->res);
     }
 
     /**
      * @return array|null
+     * Извлекает результирующий ряд в виде ассоциативного массива
      */
-    public function GetNext()
-    {
+    public function GetNext() {
         return mysqli_fetch_assoc($this->res);
     }
 
     /**
-     * Вернёт все записи
+     * Возвращает массив всех строк из результирующего набора
      * @return mixed
      */
-    public function GetAll()
-    {
+    public function GetAll() {
         return mysqli_fetch_all($this->res,MYSQLI_ASSOC);
     }
 
@@ -55,18 +53,17 @@ class DBResult
      * @param array $params
      * @return object|stdClass
      */
-    public function GetNextObject($class_name = "stdClass", $params = array())
-    {
+    public function GetNextObject($class_name = "stdClass", $params = array()) {
         return empty($params)
             ? mysqli_fetch_object($this->res, $class_name)
             : mysqli_fetch_object($this->res, $class_name, $params);
     }
 
     /**
+     * Получение строки результирующей таблицы в виде массива
      * @return mixed
      */
-    public function GetRow()
-    {
+    public function GetRow() {
         return mysqli_fetch_row($this->res);
     }
 
@@ -74,8 +71,7 @@ class DBResult
      * Вернёт количество записей выборки
      * @return int
      */
-    public function ResCount()
-    {
+    public function ResCount() {
         return mysqli_num_rows($this->res);
     }
 }

@@ -1,48 +1,91 @@
 <?php
 namespace AKost\MegaDB;
 
+use Exception;
+
 /**
  * Class Entity
  * @package AKost\MegaDB
- * @author Alex Developer
+ * @author Alexander Kostylev
  * @version 1.0.0
  * @license MIT
  */
 class Entity
 {
+    /**
+     * @var DB Содержит в себе ссылку на соединение с базой данных
+     */
     private static $DB;
+
+    /**
+     * @var string Название сущности
+     */
     private static $tblName;
 
-    public function __construct($_tblName)
-    {
-        global $MC_DB;
-        self::$DB = $MC_DB;
-
-        self::$tblName = $_tblName;
+    /**
+     * Entity constructor.
+     * @param DB $con
+     * @param $_tblName
+     */
+    public function __construct(DB $con, $_tblName) {
+        try {
+            // Проверяем существование таблицы в базе данных
+            if ($con->TableExists($_tblName)) {
+                self::$DB       = $con;
+                self::$tblName  = $_tblName;
+            }
+            else {
+                throw new Exception("Table '{$_tblName}' does not exists in '" . $con->getName() . "'");
+            }
+        }
+        catch (Exception $e) {
+            $con::$exception = $e;
+        }
     }
 
-    function GetDBTableName()
-    {
+    /**
+     * @return string Возвращаем название сущности
+     */
+    function GetTableName() {
         return self::$tblName;
     }
 
-    function Add($arFields)
-    {
+    /**
+     * Добавляем запись в таблицу
+     * @param $arFields
+     * @return mixed
+     */
+    function Add($arFields) {
         return self::$DB->Add($arFields, self::$tblName);
     }
 
-    static function Delete($id)
-    {
+    /**
+     * Удаляем запись из таблицы
+     * @param $id
+     * @return bool
+     */
+    static function Delete($id) {
         return self::$DB::Delete($id, self::$tblName);
     }
 
-    static function GetByID($id)
-    {
+    /**
+     * Получаем запись из таблицы по ID
+     * @param $id
+     * @return DBResult|bool
+     */
+    static function GetByID($id) {
         return self::$DB::GetByID($id, self::$tblName);
     }
 
-    static function GetList($arOrder, $arFilter, $arSelect, $limit = 0)
-    {
+    /**
+     * Получаем записи по фильтру
+     * @param $arOrder
+     * @param $arFilter
+     * @param $arSelect
+     * @param int $limit
+     * @return DBResult|bool
+     */
+    static function GetList($arOrder, $arFilter, $arSelect, $limit = 0) {
         return self::$DB->GetList($arOrder, $arFilter, $arSelect, $limit, self::$tblName);
     }
 }
