@@ -1,9 +1,9 @@
-<?
+<?php
 namespace AKost\MegaDB;
 
 /**
  * Class DBResult
- * @package MegaCoder
+ * @package AKost\MegaDB
  * @author Alex Developer
  * @version 1.0.0
  * @license MIT
