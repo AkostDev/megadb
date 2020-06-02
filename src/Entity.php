@@ -95,7 +95,7 @@ class Entity
      * @param int $limit
      * @return DBResult|bool
      */
-    /*static function GetList($arOrder = [], $arFilter = [], $arSelect = [], $limit = 0) {
+    static function GetList($arOrder = [], $arFilter = [], $arSelect = [], $limit = 0) {
         return self::$DB->GetList($arOrder, $arFilter, $arSelect, $limit, self::$tblName);
-    }*/
+    }
 }
