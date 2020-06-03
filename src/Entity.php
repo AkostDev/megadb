@@ -89,13 +89,10 @@ class Entity
 
     /**
      * Получаем записи по фильтру
-     * @param $arOrder
-     * @param $arFilter
-     * @param $arSelect
-     * @param int $limit
+     * @param array $arFields
      * @return DBResult|bool
      */
-    static function GetList($arOrder = [], $arFilter = [], $arSelect = [], $limit = 0) {
-        return self::$DB->GetList($arOrder, $arFilter, $arSelect, $limit, self::$tblName);
+    static function GetList($arFields = []) {
+        return self::$DB->GetList(self::$tblName, $arFields);
     }
 }

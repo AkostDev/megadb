@@ -62,7 +62,28 @@ class DB
             self::$exception = $e;
         }
 
-        $this->dbName = $db;
+        if (!empty($db))
+            $this->setName($db);
+    }
+
+    /**
+     * Установка названия Базы Данных
+     * @param $db_name
+     */
+    public function setName($db_name) {
+        $db_name = htmlspecialchars(trim($db_name));
+
+        try {
+            if (empty($db_name)) {
+                self::$errors = true;
+                throw new Exception("DB Name must not be empty");
+            }
+
+            $this->dbName = $db_name;
+        }
+        catch (Exception $e) {
+            self::$exception = $e;
+        }
     }
 
     /**
@@ -284,16 +305,14 @@ class DB
 
     /**
      * Получение записей по фильтру
-     * @param $arOrder
-     * @param $arFilter
-     * @param $arSelect
-     * @param $limit
      * @param $tblName
-     * @return DBResult | bool
+     * @param array $arFields
+     * @return DBResult|bool
      */
-    public function GetList($arOrder, $arFilter, $arSelect, $limit, $tblName) {
+    public function GetList($tblName, $arFields = []) {
         // Если поля для выборки не указаны, то берём все поля
-        if (empty($arSelect)) $arSelect = ['*'];
+        if (empty($arFields['select'])) $arSelect = ['*'];
+        else $arSelect = $arFields['select'];
 
         // Формируем SQL запрос
         $sql = "SELECT " . implode(', ', $arSelect) . " FROM {$tblName}";
@@ -305,7 +324,7 @@ class DB
             'TYPES'     => '',
             'VALUES'    => []
         ];
-        self::prepareFilter($arFilter, $arTypes, $arRes, count($arFilter) - 2);
+        self::prepareFilter($arFields['filter'], $arTypes, $arRes, count($arFields['filter']) - 2);
 
         // Если фильтр не пустой, то добавляем условия в SQL запрос
         if (!empty($arRes['VALUES'])) {
@@ -313,10 +332,10 @@ class DB
         }
 
         // Если указаны параметры сортировки
-        if (!empty($arOrder)) {
+        if (!empty($arFields['order'])) {
             $sql .= " ORDER BY ";
             $i = 0;
-            foreach ($arOrder as $key => $type) {
+            foreach ($arFields['order'] as $key => $type) {
                 if ($i > 0) {
                     $sql .= ", ";
                 }
@@ -325,8 +344,8 @@ class DB
             }
         }
 
-        if ($limit > 0) {
-            $sql .= " LIMIT {$limit}";
+        if ($arFields['limit'] > 0) {
+            $sql .= " LIMIT {$arFields['limit']}";
         }
 
         try {

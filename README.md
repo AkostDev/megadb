@@ -1,2 +1,2 @@
 # Simple PHP Class for MySQL
-> V2
+> Version 2
