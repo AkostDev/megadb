@@ -1,2 +1,2 @@
-# megadb
-Simple PHP Class for MySQL
+# Simple PHP Class for MySQL
+> V2
