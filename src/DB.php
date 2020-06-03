@@ -43,7 +43,8 @@ class DB
      * @param string $db Название базы данных
      * @param string $default_charset Кодировка базы данных
      */
-    public function __construct($host, $username, $pass, $db = '', $default_charset = 'utf8mb4') {
+    public function __construct($host, $username, $pass, $db = '', $default_charset = 'utf8mb4')
+    {
         try {
             // Устанавливаем соединение с БД
             // Если не удалось установить соединение - выбрасываем исключение
@@ -70,7 +71,8 @@ class DB
      * Установка названия Базы Данных
      * @param $db_name
      */
-    public function setName($db_name) {
+    public function setName($db_name)
+    {
         $db_name = htmlspecialchars(trim($db_name));
 
         try {
@@ -90,7 +92,8 @@ class DB
      * Возвращает имя базы данных или false, в случае, если не задано
      * @return bool|string
      */
-    public function getName() {
+    public function getName()
+    {
         return empty($this->dbName) ? false : $this->dbName;
     }
 
@@ -100,7 +103,8 @@ class DB
      * @param int $resultmode
      * @return bool|DBResult
      */
-    public function Query($strQuery, $resultmode = MYSQLI_STORE_RESULT) {
+    public function Query($strQuery, $resultmode = MYSQLI_STORE_RESULT)
+    {
         $res = mysqli_query($this->connect, $strQuery, $resultmode);
         return is_bool($res) ? $res : new DBResult($res);
     }
@@ -110,7 +114,8 @@ class DB
      * @param $tableName
      * @return bool
      */
-    public function TableExists($tableName) {
+    public function TableExists($tableName)
+    {
         $res = $this->Query("SHOW TABLES LIKE '{$tableName}'");
 
         return ($res->ResCount() > 0);
@@ -120,7 +125,8 @@ class DB
      * Получение списка таблиц в базе данных
      * @return mixed
      */
-    public function GetTableList() {
+    public function GetTableList()
+    {
         $dbName = $this->dbName;
         $resT = $this->Query("SELECT * FROM information_schema.tables WHERE table_schema='{$dbName}' ORDER BY TABLE_ROWS DESC, TABLE_NAME ASC");
         return $resT->GetAll();
@@ -131,7 +137,8 @@ class DB
      * @param $tableName
      * @return bool
      */
-    private function GetTypes($tableName) {
+    private function GetTypes($tableName)
+    {
         $arResult = false;
 
         try {
@@ -177,7 +184,8 @@ class DB
      * @param $tblName
      * @return mixed
      */
-    public function Add($arFields, $tblName) {
+    public function Add($arFields, $tblName)
+    {
         $arAddValues = $arrAddFields = $arValues = [];
         $str_types = '';
 
@@ -224,7 +232,8 @@ class DB
      * @param $tblName
      * @return int|string|false
      */
-    public function Update($rowId, $arFields, $tblName) {
+    public function Update($rowId, $arFields, $tblName)
+    {
         $strUpdate = $str_types = "";
         $arValues = [];
 
@@ -267,7 +276,8 @@ class DB
      * @param $tblName
      * @return bool
      */
-    public static function Delete($rowId, $tblName) {
+    public static function Delete($rowId, $tblName)
+    {
         mysqli_stmt_prepare(self::$stmt, "DELETE FROM {$tblName} WHERE id=?");
         mysqli_stmt_bind_param(self::$stmt, "i", intval($rowId));
 
@@ -280,7 +290,8 @@ class DB
      * @param $tblName
      * @return DBResult | bool
      */
-    public static function GetByID($rowId, $tblName) {
+    public static function GetByID($rowId, $tblName)
+    {
         $rowId = intval($rowId);
         try {
             if (!mysqli_stmt_prepare(self::$stmt, "SELECT * FROM {$tblName} WHERE id=?")) {
@@ -309,7 +320,8 @@ class DB
      * @param array $arFields
      * @return DBResult|bool
      */
-    public function GetList($tblName, $arFields = []) {
+    public function GetList($tblName, $arFields = [])
+    {
         // Если поля для выборки не указаны, то берём все поля
         if (empty($arFields['select'])) $arSelect = ['*'];
         else $arSelect = $arFields['select'];
@@ -380,7 +392,8 @@ class DB
      * @param $arResult
      * @param $cnt
      */
-    private static function prepareFilter($arFilter, $arTypes, &$arResult, $cnt) {
+    private static function prepareFilter($arFilter, $arTypes, &$arResult, $cnt)
+    {
         $arSim = ['<=', '>=', '<', '>', '!='];
         $logic = ' AND ';
         $conditionLogic = ' AND ';
@@ -432,7 +445,8 @@ class DB
      * В случае ошибки возвращает поля с описанием ошибки
      * @return array | bool
      */
-    public function GetError() {
+    public function GetError()
+    {
         return is_null(self::$exception) ? false : [
             'message'   => self::$exception->getMessage(),
             'code'      => self::$exception->getCode(),
@@ -441,3 +455,6 @@ class DB
         ];
     }
 }
+
+global $A_DB;
+$A_DB = new DB('localhost', 'devil', 'EMiM8QyX64xE', 'devil_db');
