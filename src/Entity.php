@@ -25,14 +25,20 @@ class Entity
     /**
      * Entity constructor.
      * @param DB $con
-     * @param $_tblName
+     * @param string $_tblName
      */
-    public function __construct(DB $con, $_tblName) {
+    public function __construct($_tblName)
+    {
+        global $A_DB;
+        $con = $A_DB;
+
         try {
             // Проверяем существование таблицы в базе данных
             if ($con->TableExists($_tblName)) {
-                self::$DB       = $con;
-                self::$tblName  = $_tblName;
+                self::$DB = $con;
+
+                if (!empty($_tblName))
+                    self::$tblName  = $_tblName;
             }
             else {
                 throw new Exception("Table '{$_tblName}' does not exists in '" . $con->getName() . "'");
@@ -46,7 +52,8 @@ class Entity
     /**
      * @return string Возвращаем название сущности
      */
-    function GetTableName() {
+    function GetTableName()
+    {
         return self::$tblName;
     }
 
@@ -55,7 +62,8 @@ class Entity
      * @param $arFields
      * @return mixed
      */
-    function Add($arFields) {
+    function Add($arFields)
+    {
         return self::$DB->Add($arFields, self::$tblName);
     }
 
@@ -65,7 +73,8 @@ class Entity
      * @param $arFields
      * @return mixed
      */
-    function Update($rowId, $arFields) {
+    function Update($rowId, $arFields)
+    {
         return self::$DB->Update($rowId, $arFields, self::$tblName);
     }
 
@@ -74,7 +83,8 @@ class Entity
      * @param $id
      * @return bool
      */
-    static function Delete($id) {
+    static function Delete($id)
+    {
         return self::$DB::Delete($id, self::$tblName);
     }
 
@@ -83,7 +93,8 @@ class Entity
      * @param $id
      * @return DBResult|bool
      */
-    static function GetByID($id) {
+    static function GetByID($id)
+    {
         return self::$DB::GetByID($id, self::$tblName);
     }
 
@@ -92,7 +103,8 @@ class Entity
      * @param array $arFields
      * @return DBResult|bool
      */
-    static function GetList($arFields = []) {
+    static function GetList($arFields = [])
+    {
         return self::$DB->GetList(self::$tblName, $arFields);
     }
 }
