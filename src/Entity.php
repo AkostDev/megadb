@@ -24,21 +24,19 @@ class Entity
 
     /**
      * Entity constructor.
-     * @param DB $con
      * @param string $_tblName
      */
-    public function __construct($_tblName)
+    public function __construct(string $_tblName)
     {
         global $A_DB;
         $con = $A_DB;
+        self::$DB = $con;
 
         try {
             // Проверяем существование таблицы в базе данных
             if ($con->TableExists($_tblName)) {
-                self::$DB = $con;
-
                 if (!empty($_tblName))
-                    self::$tblName  = $_tblName;
+                    self::$tblName = $_tblName;
             }
             else {
                 throw new Exception("Table '{$_tblName}' does not exists in '" . $con->getName() . "'");
@@ -52,7 +50,7 @@ class Entity
     /**
      * @return string Возвращаем название сущности
      */
-    function GetTableName()
+    public function GetTableName()
     {
         return self::$tblName;
     }
@@ -62,7 +60,7 @@ class Entity
      * @param $arFields
      * @return mixed
      */
-    function Add($arFields)
+    public function Add($arFields)
     {
         return self::$DB->Add($arFields, self::$tblName);
     }
@@ -73,7 +71,7 @@ class Entity
      * @param $arFields
      * @return mixed
      */
-    function Update($rowId, $arFields)
+    public function Update($rowId, $arFields)
     {
         return self::$DB->Update($rowId, $arFields, self::$tblName);
     }
@@ -83,7 +81,7 @@ class Entity
      * @param $id
      * @return bool
      */
-    static function Delete($id)
+    public static function Delete($id)
     {
         return self::$DB::Delete($id, self::$tblName);
     }
@@ -93,7 +91,7 @@ class Entity
      * @param $id
      * @return DBResult|bool
      */
-    static function GetByID($id)
+    public static function GetByID($id)
     {
         return self::$DB::GetByID($id, self::$tblName);
     }
@@ -103,8 +101,24 @@ class Entity
      * @param array $arFields
      * @return DBResult|bool
      */
-    static function GetList($arFields = [])
+    public static function GetList($arFields = [])
     {
         return self::$DB->GetList(self::$tblName, $arFields);
+    }
+
+    /**
+     * В случае ошибки возвращает поля с описанием ошибки
+     * @return array | bool
+     */
+    public function GetError()
+    {
+        $con = self::$DB;
+
+        return is_null($con::$exception) ? false : [
+            'message'   => $con::$exception->getMessage(),
+            'code'      => $con::$exception->getCode(),
+            'file'      => $con::$exception->getFile(),
+            'line'      => $con::$exception->getLine(),
+        ];
     }
 }

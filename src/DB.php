@@ -455,6 +455,3 @@ class DB
         ];
     }
 }
-
-global $A_DB;
-$A_DB = new DB('localhost', 'devil', 'EMiM8QyX64xE', 'devil_db');
